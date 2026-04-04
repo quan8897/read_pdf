@@ -6,6 +6,9 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      outDir: 'build', // Đổi từ dist sang build để Vercel nhận diện được
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
