@@ -2,18 +2,20 @@ import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 
 // Cách lấy API Key an toàn cho cả môi trường dev và production (Vercel)
 const getApiKey = () => {
-  // Ưu tiên VITE_ prefix cho Vite/Vercel
+  // Ưu tiên VITE_ prefix cho Vite/Vercel (Đây là cách chuẩn của Vite)
   const viteKey = (import.meta as any).env.VITE_GEMINI_API_KEY;
   if (viteKey) return viteKey;
   
-  // Thử các tên biến khác phổ biến
+  // Thử biến môi trường mặc định của AI Studio
   const geminiKey = (import.meta as any).env.GEMINI_API_KEY;
   if (geminiKey) return geminiKey;
   
-  // Fallback cho một số môi trường đặc biệt
-  const processKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : "";
+  // Fallback cho môi trường Node.js (nếu có)
+  if (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) {
+    return process.env.GEMINI_API_KEY;
+  }
   
-  return processKey || "";
+  return "";
 };
 
 const ai = new GoogleGenAI({ apiKey: getApiKey() });

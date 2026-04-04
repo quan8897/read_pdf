@@ -161,6 +161,8 @@ export default function App() {
     if (selectedResultId === id) setSelectedResultId(null);
   };
 
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   const processSingleFile = async (fileItem: FileItem) => {
     setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: 'processing', error: undefined } : f));
     if (!selectedResultId) setSelectedResultId(fileItem.id);
@@ -225,6 +227,7 @@ export default function App() {
         } catch (e) {}
       }
 
+      if (!lastJson) throw new Error("Không nhận được dữ liệu từ AI.");
       const finalResult = JSON.parse(lastJson) as ExtractedInfo;
       
       // Cập nhật tên file dựa trên số văn bản quét được
@@ -239,7 +242,16 @@ export default function App() {
       } : f));
     } catch (err) {
       console.error(err);
-      const errorMessage = err instanceof Error ? err.message : 'Lỗi xử lý';
+      let errorMessage = 'Lỗi xử lý';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('429') || err.message.includes('RESOURCE_EXHAUSTED')) {
+          errorMessage = 'Hết hạn mức API (429). Vui lòng đợi 1 phút rồi thử lại.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
       setFiles(prev => prev.map(f => f.id === fileItem.id ? { ...f, status: 'error', error: errorMessage } : f));
     }
   };
@@ -268,8 +280,10 @@ export default function App() {
     const idleFiles = files.filter(f => f.status === 'idle' || f.status === 'error');
     if (idleFiles.length === 0) return;
     setIsProcessingAll(true);
-    for (const fileItem of idleFiles) {
-      await processSingleFile(fileItem);
+    for (let i = 0; i < idleFiles.length; i++) {
+      await processSingleFile(idleFiles[i]);
+      // Thêm khoảng trễ 3 giây giữa các file để tránh 429
+      if (i < idleFiles.length - 1) await sleep(3000);
     }
     setIsProcessingAll(false);
   };
@@ -296,8 +310,10 @@ export default function App() {
     if (selectedFileIds.size === 0) return;
     setIsProcessingAll(true);
     const toProcess = files.filter(f => selectedFileIds.has(f.id));
-    for (const fileItem of toProcess) {
-      await processSingleFile(fileItem);
+    for (let i = 0; i < toProcess.length; i++) {
+      await processSingleFile(toProcess[i]);
+      // Thêm khoảng trễ 3 giây giữa các file để tránh 429
+      if (i < toProcess.length - 1) await sleep(3000);
     }
     setIsProcessingAll(false);
   };
