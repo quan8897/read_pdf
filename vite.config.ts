@@ -7,7 +7,7 @@ export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
     build: {
-      outDir: 'build', // Đổi từ dist sang build để Vercel nhận diện được
+      outDir: 'dist', // Đổi lại về dist để AI Studio nhận diện được
     },
     resolve: {
       alias: {
