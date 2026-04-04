@@ -149,7 +149,8 @@ export default function App() {
       }
     } catch (err) {
       console.error("Lỗi tách file:", err);
-      alert("Không thể tách file. Vui lòng thử lại.");
+      const msg = err instanceof Error ? err.message : "Lỗi không xác định";
+      alert(`Không thể tách file: ${msg}. Vui lòng kiểm tra API Key.`);
     } finally {
       setIsSplitting(false);
       if (splitInputRef.current) splitInputRef.current.value = '';
