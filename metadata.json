@@ -1,0 +1,5 @@
+{
+  "name": "Remix: Trình Đọc Văn Bản Hành Chính AI",
+  "description": "Ứng dụng sử dụng AI để tự động trích xuất số văn bản, ngày phát hành và tiêu đề từ các tệp PDF hành chính.",
+  "requestFramePermissions": []
+}
