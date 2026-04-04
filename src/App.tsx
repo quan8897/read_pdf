@@ -283,8 +283,8 @@ export default function App() {
     setIsProcessingAll(true);
     for (let i = 0; i < idleFiles.length; i++) {
       await processSingleFile(idleFiles[i]);
-      // Thêm khoảng trễ 3 giây giữa các file để tránh 429
-      if (i < idleFiles.length - 1) await sleep(3000);
+      // Thêm khoảng trễ 1.5 giây giữa các file để tránh 429 (đã tối ưu tốc độ)
+      if (i < idleFiles.length - 1) await sleep(1500);
     }
     setIsProcessingAll(false);
   };
@@ -313,8 +313,8 @@ export default function App() {
     const toProcess = files.filter(f => selectedFileIds.has(f.id));
     for (let i = 0; i < toProcess.length; i++) {
       await processSingleFile(toProcess[i]);
-      // Thêm khoảng trễ 3 giây giữa các file để tránh 429
-      if (i < toProcess.length - 1) await sleep(3000);
+      // Thêm khoảng trễ 1.5 giây giữa các file để tránh 429 (đã tối ưu tốc độ)
+      if (i < toProcess.length - 1) await sleep(1500);
     }
     setIsProcessingAll(false);
   };

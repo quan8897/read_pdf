@@ -127,7 +127,7 @@ export async function* extractPdfInfoStream(base64Data: string): AsyncGenerator<
     ],
     config: {
       responseMimeType: "application/json",
-      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }, // Tối ưu tốc độ phản hồi
+      thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL }, // Tối ưu tốc độ phản hồi tối đa
       responseSchema: {
         type: Type.OBJECT,
         properties: {
