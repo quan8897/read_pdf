@@ -22,7 +22,8 @@ import {
   FileSearch,
   ArrowRight,
   RefreshCcw,
-  ExternalLink
+  ExternalLink,
+  Copy
 } from 'lucide-react';
 import { extractPdfInfoStream, detectDocumentBoundaries, type ExtractedInfo } from './services/geminiService';
 
@@ -700,15 +701,25 @@ export default function App() {
                         <DetailItem icon={<Calendar className="w-4 h-4"/>} label="Ngày" value={selectedFileItem.result.issueDate} color="orange" />
                         <DetailItem icon={<TypeIcon className="w-4 h-4"/>} label="Tiêu đề" value={selectedFileItem.result.title} color="purple" />
                         
-                        <div className="pt-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Tóm tắt nội dung</label>
+                        <div className="pt-2 group">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Tóm tắt nội dung</label>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity -my-2">
+                              <CopyButton text={selectedFileItem.result.summary} />
+                            </div>
+                          </div>
                           <div className="bg-white p-4 rounded-xl border border-slate-100 text-xs text-slate-600 leading-relaxed italic">
                             "{selectedFileItem.result.summary}"
                           </div>
                         </div>
 
-                        <div>
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Nơi nhận</label>
+                        <div className="group">
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Nơi nhận</label>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity -my-2">
+                              <CopyButton text={selectedFileItem.result.recipients} />
+                            </div>
+                          </div>
                           <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-xs text-slate-700 whitespace-pre-line leading-relaxed">
                             {selectedFileItem.result.recipients}
                           </div>
@@ -753,16 +764,43 @@ function DetailItem({ icon, label, value, color, isMono = false }: { icon: any, 
   };
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 group">
       <div className={`p-2 rounded-lg shrink-0 h-fit ${colors[color]}`}>
         {icon}
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</label>
-        <p className={`text-sm font-bold text-slate-800 mt-0.5 leading-tight ${isMono ? 'font-mono tracking-tighter' : ''}`}>
-          {value}
-        </p>
+        <div className="flex items-start justify-between gap-2 mt-0.5">
+          <p className={`text-sm font-bold text-slate-800 leading-tight ${isMono ? 'font-mono tracking-tighter' : ''}`}>
+            {value}
+          </p>
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity -my-1">
+            <CopyButton text={value} />
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button 
+      onClick={handleCopy}
+      className="p-1.5 hover:bg-slate-100 rounded-md text-slate-400 hover:text-blue-600 transition-all shrink-0 flex items-center justify-center"
+      title="Sao chép"
+    >
+      {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+    </button>
   );
 }
