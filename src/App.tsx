@@ -23,7 +23,8 @@ import {
   ArrowRight,
   RefreshCcw,
   ExternalLink,
-  Copy
+  Copy,
+  TableProperties
 } from 'lucide-react';
 import { extractPdfInfoStream, detectDocumentBoundaries, type ExtractedInfo } from './services/geminiService';
 
@@ -720,8 +721,30 @@ export default function App() {
                               <CopyButton text={selectedFileItem.result.recipients} />
                             </div>
                           </div>
-                          <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-xs text-slate-700 whitespace-pre-line leading-relaxed">
+                          <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-xs text-slate-700 whitespace-pre-line leading-relaxed max-h-36 overflow-y-auto custom-scrollbar">
                             {selectedFileItem.result.recipients}
+                          </div>
+                        </div>
+
+                        {/* Tính năng Copy Excel */}
+                        <div className="pt-4 mt-4 border-t border-slate-100">
+                          <div className="flex items-center justify-between mb-3">
+                            <label className="text-[9px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1.5">
+                              <TableProperties className="w-3.5 h-3.5" /> Dán nhanh vào Excel
+                            </label>
+                            <CopyExcelButton result={selectedFileItem.result} />
+                          </div>
+                          <div className="bg-green-50/50 p-3 rounded-xl border border-green-100">
+                            <p className="text-[9px] text-green-700 font-bold uppercase tracking-widest mb-2 opacity-80">
+                              Cấu trúc: Số hiệu ➔ Ngày ➔ Tiêu đề ➔ (Trống) ➔ Nơi nhận
+                            </p>
+                            <div className="flex gap-1 overflow-x-auto pb-1 custom-scrollbar">
+                              <ExcelCell value={selectedFileItem.result.documentNumber} />
+                              <ExcelCell value={selectedFileItem.result.issueDate} />
+                              <ExcelCell value={selectedFileItem.result.title} />
+                              <ExcelCell value="(Trống)" isEmpty />
+                              <ExcelCell value={selectedFileItem.result.recipients} />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -802,5 +825,89 @@ function CopyButton({ text }: { text: string }) {
     >
       {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
+  );
+}
+
+function CopyExcelButton({ result }: { result: ExtractedInfo }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // 1. Xử lý Plain Text (Dự phòng cho các trình duyệt cũ)
+    const escapeCell = (text: string) => {
+      if (!text) return '';
+      let processedText = text;
+      if (/^\s*[-+=@]/.test(processedText)) {
+        processedText = "'" + processedText;
+      }
+      if (processedText.includes('\t') || processedText.includes('\n') || processedText.includes('"')) {
+        return `"${processedText.replace(/"/g, '""')}"`;
+      }
+      return processedText;
+    };
+
+    const plainText = `${escapeCell(result.documentNumber)}\t${escapeCell(result.issueDate)}\t${escapeCell(result.title)}\t\t${escapeCell(result.recipients)}`;
+
+    // 2. Xử lý HTML (Ép Excel tự động bật Wrap Text và xuống dòng chuẩn)
+    const escapeHtml = (text: string) => {
+      if (!text) return '';
+      let processedText = text;
+      if (/^\s*[-+=@]/.test(processedText)) {
+        processedText = "'" + processedText;
+      }
+      return processedText
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        // Thuộc tính mso-data-placement:same-cell ép Excel giữ các dòng trong CÙNG 1 Ô
+        .replace(/\n/g, '<br style="mso-data-placement:same-cell;">'); 
+    };
+
+    const htmlString = `
+      <table>
+        <tr>
+          <td>${escapeHtml(result.documentNumber)}</td>
+          <td>${escapeHtml(result.issueDate)}</td>
+          <td style="white-space: normal;">${escapeHtml(result.title)}</td>
+          <td></td>
+          <td style="white-space: normal;">${escapeHtml(result.recipients)}</td>
+        </tr>
+      </table>
+    `;
+
+    try {
+      // Sử dụng Clipboard API hiện đại để ghi cả HTML và Plain Text
+      const clipboardItem = new ClipboardItem({
+        'text/plain': new Blob([plainText], { type: 'text/plain' }),
+        'text/html': new Blob([htmlString], { type: 'text/html' })
+      });
+      await navigator.clipboard.write([clipboardItem]);
+    } catch (err) {
+      // Fallback nếu trình duyệt không hỗ trợ
+      await navigator.clipboard.writeText(plainText);
+    }
+    
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button 
+      onClick={handleCopy}
+      className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
+    >
+      {copied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+      {copied ? 'Đã Copy' : 'Copy cho Excel'}
+    </button>
+  );
+}
+
+function ExcelCell({ value, isEmpty }: { value: string, isEmpty?: boolean }) {
+  return (
+    <div className={`shrink-0 max-w-[120px] px-2 py-1.5 rounded border text-[10px] truncate ${isEmpty ? 'bg-slate-50 border-slate-200 text-slate-400 border-dashed' : 'bg-white border-green-200 text-slate-700'}`} title={value}>
+      {value}
+    </div>
   );
 }
