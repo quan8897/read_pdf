@@ -151,8 +151,14 @@ export default function App() {
       }
     } catch (err) {
       console.error("Lỗi tách file:", err);
-      const msg = err instanceof Error ? err.message : "Lỗi không xác định";
-      alert(`Không thể tách file: ${msg}. Vui lòng kiểm tra API Key.`);
+      let msg = err instanceof Error ? err.message : "Lỗi không xác định";
+      
+      // Làm gọn thông báo lỗi nếu dính lỗi Quota/429
+      if (msg.includes('429') || msg.includes('QuotaFailure') || msg.includes('RESOURCE_EXHAUSTED')) {
+        msg = "Hết hạn mức API (Quota Exceeded). Vui lòng đợi 1 phút hoặc thay API Key mới.";
+      }
+      
+      alert(`Không thể tách file: ${msg}`);
     } finally {
       setIsSplitting(false);
       if (splitInputRef.current) splitInputRef.current.value = '';
